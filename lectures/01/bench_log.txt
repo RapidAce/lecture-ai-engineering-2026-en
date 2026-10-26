@@ -1,0 +1,26 @@
+gemini-3.5-flash-lite t=None run1 3.14s in=6 out=718 | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and efficient technique used 
+gemini-3.5-flash-lite t=None run2 3.22s in=6 out=759 | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and efficient technique used 
+gemini-3.5-flash-lite t=None run3 2.68s in=6 out=676 | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and efficient technique used 
+gemini-3.5-flash-lite t=None run1 0.9s in=18 out=87 | I do not have access to real-time information or specific details about the internal struc
+gemini-3.5-flash-lite t=None run2 1.54s in=18 out=230 | Based on the structure of the AIE2026 (AI Engineering 2026) course, the homework is typica
+gemini-3.5-flash-lite t=None run3 1.09s in=18 out=81 | I do not have access to specific information about the "AIE2026 course" or its homework le
+gemini-3.5-flash t=None run1 35.55s in=6 out=780 | Depending on the context, **LoRA** usually refers to one of two popular technologies:  1. 
+gemini-3.5-flash t=None run2 19.06s in=6 out=904 | Depending on the context, **LoRA** usually refers to one of two major technological concep
+gemini-3.5-flash t=None run3 16.23s in=6 out=879 | **LoRA**, which stands for **Low-Rank Adaptation**, is a popular and groundbreaking techni
+gemini-3.5-flash t=None run1 12.06s in=18 out=403 | In most **AI Engineering (AIE)** courses and bootcamps that use a 3-tiered homework system
+gemini-3.5-flash t=None run2 14.01s in=18 out=356 | In the **AIE (AI Engineer)** course curriculum (such as those structured for AI Vietnam / 
+gemini-3.5-flash t=None run3 9.52s in=18 out=280 | In the **AI Engineering Bootcamp (AIE)** course (such as those by AI Makerspace), homework
+gemini-3.5-flash-lite t=0.0 run1 2.56s in=6 out=640 | **LoRA** stands for **Low-Rank Adaptation**.   In the simplest terms, it is a technique us
+gemini-3.5-flash-lite t=0.0 run2 3.0s in=6 out=696 | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and efficient technique used 
+gemini-3.5-flash-lite t=0.0 run3 2.92s in=6 out=671 | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and efficient technique used 
+gemini-3.5-flash-lite t=0.0 run1 0.72s in=18 out=77 | I do not have access to specific information about the "AIE2026 course" or its homework le
+gemini-3.5-flash-lite t=0.0 run2 1.08s in=18 out=181 | Based on the structure of the AIE2026 (AI Engineering 2026) course, the three homework lev
+gemini-3.5-flash-lite t=0.0 run3 0.83s in=18 out=84 | I do not have access to real-time information or specific details about the "AIE2026 cours
+
+=== SUMMARY (mean over runs) ===
+gemini-3.5-flash-lite t=None | 'What is LoRA?' | ok=3/3 sec=3.01 in=6 out=717.67 distinct_answers=3
+gemini-3.5-flash-lite t=None | 'What are the 3 homework levels in the AI' | ok=3/3 sec=1.18 in=18 out=132.67 distinct_answers=3 mentions_all_3_levels=0/3
+gemini-3.5-flash t=None | 'What is LoRA?' | ok=3/3 sec=23.61 in=6 out=854.33 distinct_answers=3
+gemini-3.5-flash t=None | 'What are the 3 homework levels in the AI' | ok=3/3 sec=11.86 in=18 out=346.33 distinct_answers=3 mentions_all_3_levels=1/3
+gemini-3.5-flash-lite t=0.0 | 'What is LoRA?' | ok=3/3 sec=2.83 in=6 out=669 distinct_answers=3
+gemini-3.5-flash-lite t=0.0 | 'What are the 3 homework levels in the AI' | ok=3/3 sec=0.88 in=18 out=114 distinct_answers=3 mentions_all_3_levels=1/3
