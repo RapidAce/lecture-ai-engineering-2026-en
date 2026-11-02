@@ -1,0 +1,12 @@
+gemini-3.5-flash-lite t=None run1 4.67s in=6 out=763 think=None served=gemini-3.5-flash-lite errs=[] | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and effic
+gemini-3.5-flash-lite t=None run2 2.78s in=6 out=667 think=None served=gemini-3.5-flash-lite errs=[] | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and effic
+gemini-3.5-flash-lite t=None run3 2.82s in=6 out=675 think=None served=gemini-3.5-flash-lite errs=[] | **LoRA** stands for **Low-Rank Adaptation**.   It is a popular and hig
+gemini-3.5-flash-lite t=None run1 0.57s in=18 out=45 think=None served=gemini-3.5-flash-lite errs=[] | I do not have access to real-time information, specific course syllabi
+gemini-3.5-flash-lite t=None run2 1.34s in=18 out=287 think=None served=gemini-3.5-flash-lite errs=[] | Based on the structure of the **AIE2026** (AI Engineer 2026) course, t
+gemini-3.5-flash-lite t=None run3 1.64s in=18 out=289 think=None served=gemini-3.5-flash-lite errs=[] | Based on the structure of the AIE2026 (AI Engineering 2026) course, th
+gemini-3.5-flash t=None run1 9.81s in=6 out=785 think=885 served=gemini-3.6-flash errs=[] | **LoRA** most commonly refers to **Low-Rank Adaptation**, a game-chang
+gemini-3.5-flash t=None run2 10.98s in=6 out=852 think=1016 served=gemini-3.6-flash errs=[] | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and revol
+gemini-3.5-flash t=None run3 11.7s in=6 out=849 think=1116 served=gemini-3.6-flash errs=[] | **LoRA** stands for **Low-Rank Adaptation**. It is a popular and revol
+gemini-3.5-flash t=None run1 6.93s in=18 out=307 think=704 served=gemini-3.6-flash errs=[] | In the **AIE (AI Engineer)** course structure, the homework assignment
+gemini-3.5-flash t=None run2 6.39s in=18 out=314 think=721 served=gemini-3.6-flash errs=[] | In the **AIE (AI Engineer)** course curriculum (such as the AI Vietnam
+gemini-3.5-flash t=None run3 7.26s in=18 out=369 think=946 served=gemini-3.6-flash errs=[] | In many **AI Engineering (AIE)** courses and bootcamps, homework assig

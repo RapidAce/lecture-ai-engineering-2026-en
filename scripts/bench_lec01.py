@@ -1,4 +1,7 @@
-"""Lecture 01 homework: run each question 3 times per condition, record time and tokens."""
+"""Lecture 01 homework: run each question 3 times per condition.
+
+Records time, input/output/thinking tokens, API errors, and which model actually served the call.
+"""
 import json
 import statistics
 import sys
@@ -14,7 +17,8 @@ from app.config import get_api_key
 
 CONDITIONS = [  # (model, temperature); None = API default
     ("gemini-3.5-flash-lite", None),
-    ("gemini-3.5-flash", None),
+    ("gemini-3.5-flash", None),  # slides say this is forwarded to gemini-3.6-flash
+    ("gemini-3.8-flash", None),  # slides: about 5/min and 10-20/day on the free tier
     ("gemini-3.5-flash-lite", 0.0),
 ]
 QUESTIONS = [
@@ -22,13 +26,16 @@ QUESTIONS = [
     "What are the 3 homework levels in the AIE2026 course?",
 ]
 RUNS = 3
-PAUSE = 6  # seconds between calls, to stay under free-tier per-minute limits
+PAUSE = {"gemini-3.8-flash": 13}  # seconds between calls; default below
+DEFAULT_PAUSE = 6
+RETRY_WAIT = 35
 LEVELS = ("basic", "implementation", "advanced")
+OUT_JSON = "lectures/01/bench_results_run2.json"
 
 
 def call(client, model, temp, question):
     cfg = types.GenerateContentConfig(temperature=temp) if temp is not None else None
-    err = ""
+    errs = []  # error codes seen before success (or before giving up)
     for _ in range(3):
         t0 = time.perf_counter()
         try:
@@ -39,13 +46,16 @@ def call(client, model, temp, question):
                 "seconds": round(time.perf_counter() - t0, 2),
                 "in": u.prompt_token_count if u else None,
                 "out": u.candidates_token_count if u else None,
+                "think": getattr(u, "thoughts_token_count", None) if u else None,
+                "served": getattr(r, "model_version", None),
                 "text": r.text or "",
+                "errors": errs,
             }
         except errors.APIError as e:
-            err = f"{e.code}: {e.message}"[:200]
-            print(f"  error ({err}); waiting 30s then retrying")
-            time.sleep(30)
-    return {"ok": False, "error": err}
+            errs.append(e.code)
+            print(f"  error {e.code} ({str(e.message)[:80]}); waiting {RETRY_WAIT}s then retrying")
+            time.sleep(RETRY_WAIT)
+    return {"ok": False, "errors": errs}
 
 
 def mean(values):
@@ -63,37 +73,34 @@ def main():
                 res.update({"model": model, "temperature": temp, "question": q, "run": i})
                 rows.append(res)
                 if res["ok"]:
-                    snippet = res["text"][:90].replace("\n", " ")
-                    print(f"{model} t={temp} run{i} {res['seconds']}s in={res['in']} out={res['out']} | {snippet}")
+                    snippet = res["text"][:70].replace("\n", " ")
+                    print(f"{model} t={temp} run{i} {res['seconds']}s in={res['in']} "
+                          f"out={res['out']} think={res['think']} served={res['served']} "
+                          f"errs={res['errors']} | {snippet}")
                 else:
-                    print(f"{model} t={temp} run{i} FAILED {res['error']}")
-                time.sleep(PAUSE)
+                    print(f"{model} t={temp} run{i} FAILED errs={res['errors']}")
+                time.sleep(PAUSE.get(model, DEFAULT_PAUSE))
 
-    Path("lectures/01/bench_results.json").write_text(
-        json.dumps(rows, indent=2, ensure_ascii=False)
-    )
+    Path(OUT_JSON).write_text(json.dumps(rows, indent=2, ensure_ascii=False))
 
-    print("\n=== SUMMARY (mean over runs) ===")
+    print("\n=== SUMMARY (mean over successful runs) ===")
     for model, temp in CONDITIONS:
         for q in QUESTIONS:
-            g = [
-                r for r in rows
-                if r["model"] == model and r["temperature"] == temp
-                and r["question"] == q and r["ok"]
-            ]
-            distinct = len({r["text"] for r in g})
+            allr = [r for r in rows if r["model"] == model and r["temperature"] == temp
+                    and r["question"] == q]
+            g = [r for r in allr if r["ok"]]
+            n_err = sum(len(r["errors"]) for r in allr)
+            secs = [r["seconds"] for r in g]
+            served = sorted({str(r["served"]) for r in g})
             line = (
-                f"{model} t={temp} | {q[:40]!r} | ok={len(g)}/{RUNS} "
-                f"sec={mean([r['seconds'] for r in g])} "
-                f"in={mean([r['in'] for r in g])} "
-                f"out={mean([r['out'] for r in g])} distinct_answers={distinct}"
+                f"{model} t={temp} | {q[:30]!r} | ok={len(g)}/{RUNS} api_errors={n_err} "
+                f"sec_mean={mean(secs)} sec_max={max(secs) if secs else None} "
+                f"in={mean([r['in'] for r in g])} out={mean([r['out'] for r in g])} "
+                f"think={mean([r['think'] for r in g])} "
+                f"distinct_answers={len({r['text'] for r in g})} served={served}"
             )
-            if "homework levels" in q:
-                correct = sum(all(l in r["text"].lower() for l in LEVELS) for r in g)
-                line += f" mentions_all_3_levels={correct}/{len(g)}"
             print(line)
 
 
 if __name__ == "__main__":
     main()
-    
