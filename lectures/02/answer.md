@@ -46,7 +46,9 @@ The first row is a failure that training did not fix. The FAQ gives the assignme
 ## Homework
 I did all three levels.
 
-### Basic I changed only `num_train_epochs`, from 20 to 5, and kept lr, lora_r, lora_alpha, seed and warmup_steps the same. I restarted the Colab session before each new run.
+### Basic
+
+I changed only `num_train_epochs`, from 20 to 5, and kept lr, lora_r, lora_alpha, seed and warmup_steps the same. I restarted the Colab session before each new run.
 
 | | 20 epochs (original) | 5 epochs |
 |---|---|---|
