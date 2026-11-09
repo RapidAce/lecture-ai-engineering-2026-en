@@ -53,4 +53,23 @@ I changed one place at a time, ran the same question ("What is the difference be
 | Instructions | `Agent(instructions=INSTRUCTIONS)` | `Agent(instruction=INSTRUCTIONS)` |
 | Tools | `agent.tool_plain(fn)` once per tool | `tools=[fn, fn, fn]` in the constructor |
 | Model | passed at run time (`GoogleModel`), name from `AIE_MODEL` | a fixed string in the code, `model="gemini-3.5-flash-lite"` |
-| API key
+| API key | `GEMINI_API_KEY` through `get_api_key()` | reads `GOOGLE_API_KEY` ("Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY."), so I passed `GOOGLE_API_KEY=$GEMINI_API_KEY` |
+| How it runs | `run_sync` returns one result | `adk run` finds `root_agent`, creates a session and streams events (async) |
+| Seeing tool calls | `--trace` reads `result.all_messages()` | not shown by `adk run`; my `trace_run.py` reads them from the event stream |
+| Testing without an API | `TestModel` (the 15 tests use it) | not tried |
+
+**How the answers compare**
+
+- **"What are the 3 homework levels in the AIE2026 course?":** ADK gave the same correct levels with the same notes (any one level is enough, not graded) and ended with "(Lecture 01)".
+- **"What is the difference between LoRA and QLoRA?":** ADK made the same two calls, `search_glossary({'query': 'LoRA'})` and `search_glossary({'query': 'QLoRA'})`, in 2 model responses, which matches `requests=2` in Pydantic AI. It gave the same glossary-based explanation and hint question and ended with "(Lecture 02)".
+- **One visible difference in the plumbing:** ADK wraps a tool's string return value as `{'result': '...'}` before passing it to the model, while Pydantic AI passes the string as is.
+
+**Observations:** with the same instructions, tools and model, the two frameworks behaved the same on these questions. The behavior comes from INSTRUCTIONS and the docstrings, not from the framework. The differences are in the developer experience. Pydantic AI made the tool calls easier to see (`--trace`) and to test without an API key (TestModel). ADK gave a ready-made CLI and sessions, but I had to write my own script to see the tool calls. I ran each question only once per framework, so I cannot say anything about how often the answers would differ.
+
+### Questions
+
+- When I removed the "always search" instruction, the docstring still made the model search. In a bigger agent with many tools, which should own the rule, the system instructions or each tool's description?
+- Is there a standard way to stop a model from "asking for confirmation" in chat when the program is supposed to handle the approval itself?
+
+## Model used and honesty note
+gemini-3.5-flash-lite through the Gemini API in GitHub Codespaces, with Pydantic AI and google-adk 2.14. I used Claude to help plan the steps, write the code for make_quiz, save_learning_log, the approval loop, the ADK agent and the trace script, and draft this write-up. I ran every command myself, read the traces, chose the y and n answers, and checked the numbers above against my terminal output.
