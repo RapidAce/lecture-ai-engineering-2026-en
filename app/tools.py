@@ -5,10 +5,14 @@ Rewriting descriptions changes whether the model uses a tool and which arguments
 """
 
 import json
+import random
+import re
+from datetime import datetime
 from functools import cache
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+LOG_DIR = Path(__file__).resolve().parent.parent / "learning_log"
 MAX_RESULTS = 3
 
 
@@ -77,3 +81,34 @@ def get_lecture_summary(lecture: int) -> str:
         available = sorted(p.stem for p in (DATA_DIR / "lectures").glob("*.md"))
         return f"Key points for Lecture {lecture:02d} are not available yet. Available sessions: {', '.join(available)}"
     return path.read_text(encoding="utf-8")
+
+
+def make_quiz(lecture: int) -> str:
+    """Pick one glossary term from the given session (an integer starting at 1) and return a review question and its answer.
+
+    Use when the learner asks for a review question or a quiz, such as "Give me a review question for Lecture 2".
+    The answer is the glossary definition. Show the question first and let the learner try before giving the answer.
+    """
+    terms = [t for t in load_glossary() if t["lecture"] == lecture]
+    if not terms:
+        available = sorted({t["lecture"] for t in load_glossary()})
+        return f"There are no glossary terms for Lecture {lecture:02d}. Sessions with terms: {available}"
+    term = random.choice(terms)
+    return json.dumps(
+        {"question": f"What does \"{term['term']}\" mean?", "answer": term["definition"], "lecture": lecture},
+        ensure_ascii=False,
+    )
+
+
+def save_learning_log(title: str, content: str) -> str:
+    """Save a learning record as a Markdown file in the learning_log/ folder and return the saved path.
+
+    Use only when the learner explicitly asks to save, record, or note down what they learned.
+    title is a short title (for example, "LoRA vs QLoRA"); content is the text to save.
+        Call it directly when asked: the program itself asks the learner to approve the save, so do not ask for confirmation in your answer.
+    """
+    LOG_DIR.mkdir(exist_ok=True)
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", title).strip("-").lower()[:40] or "note"
+    path = LOG_DIR / f"{datetime.now():%Y%m%d-%H%M%S}-{slug}.md"
+    path.write_text(f"# {title}\n\n{content}\n", encoding="utf-8")
+    return f"Saved: {path.relative_to(LOG_DIR.parent)}"
