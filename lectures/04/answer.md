@@ -43,7 +43,7 @@
   - Code: the Lecture marker (a string check), and other format rules such as length limits or required phrases. These are cheap, deterministic and never drift. But code only checks form: #09's "(Lecture 03)" passes even though the lecture is wrong, and #10's "Lecture 14" passes even though that lecture does not exist. Code could also do more here, for example compare the lecture number in the answer with the lecture field of the glossary entry, or check that a quiz answer does not contain the definition text.
   - LLM: Grounding, Hint and Clarity, which need reading comprehension. They agreed with me on 9 or 10 of 10 cases, but I would still spot-check them, because the errors move between runs.
   - Human, or at least a stricter rubric: role-change and prompt-injection cases like #09. A possible rubric line: "judge what the answer does, not what it says it does".
-  ### Advanced: SWE-bench Verified
+### Advanced: SWE-bench Verified
 
 - **Dataset:** SWE-bench Verified, https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified (paper and process: https://openai.com/index/introducing-swe-bench-verified/)
 - **What the items are:** 500 real GitHub issues from 12 Python repositories. Each item gives the model the issue text and the repository at the commit before the fix, and the model has to produce a patch. In the Hugging Face viewer the gold patches range from 277 to about 17,400 characters.
