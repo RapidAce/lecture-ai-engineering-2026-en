@@ -1,0 +1,465 @@
+===== EX0 retrieval only: LoRA QLoRA difference (attempt 1) =====
+
+============================================================
+Search result 1
+============================================================
+Lecture: Fundamentals of Foundation Models
+Section: When and how to adapt the selected model
+Title: LoRA and QLoRA: adapting a large model on one GPU
+Page: Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75
+
+4/4: when and how to adapt the selected model
+LoRA and QLoRA: adapting a large model on one GPU
+Freeze the original weights and train only a small change, or delta, with LoRA. QLoRA also compresses the original weights to 4 bits.
+Sources: E. J. Hu et al., “LoRA”, ICLR 2022; T. Dettmers et al., “QLoRA”, NeurIPS 2023. The exercise uses transformers, peft, bitsandbytes and TRL.
+LoRA, Hu et al., Fig. 1: train only A and B.
+Blue — original weights W: frozen, not trained. QLoRA stores them at 4 bits, a coarser numerical representation, reducing memory to about one quarter. About 4 GB for 7B.
+Orange — small matrices A and B: only these are trained. The product of two thin matrices represents the change, with low rank.
+Analogy: leave the main model unchanged and add thin sticky notes. The trainable portion can be less than 1% of the total.
+The QLoRA paper fine-tuned a 65-billion-parameter model on one 48 GB GPU.
+• Even a Colab GPU, for example 16 GB, can adapt a model with billions of parameters. This is today's exercise.
+• Data preparation, evaluation and operation still require separate effort.
+
+[Additional transcription of text in figures/images]
+LoRA diagram: Pretrained Weights W ∈ R^(d×d); x; h; A ~ N(0, σ²); B = 0; d; r.
+
+============================================================
+Search result 2
+============================================================
+Lecture: Fundamentals of Foundation Models
+Section: When and how to adapt the selected model
+Title: PEFT: train only part of a model
+Page: Lecture 2 · Japanese source p.51
+
+4/4: when and how to adapt the selected model
+PEFT: train only part of a model, not the whole model.
+FT that updates every parameter is expensive. Methods that train only a small number of parameters, or PEFT, have become mainstream.
+Sources: original papers by Houlsby et al. (2019), Li and Liang (2021), Lester et al. (2021), and Hu et al. (2022). Available through the Hugging Face PEFT library.
+What is trained, Dettmers et al., Fig. 1:
+Full Fine-Tuning: update all parameters; large memory and storage requirements.
+LoRA: freeze the base model and update only a small added component.
+QLoRA: also compress the base model to 4 bits to save memory.
+Main PEFT methods:
+Adapters: insert small layers between existing layers and train only those. Houlsby et al., 2019.
+Prefix/prompt tuning: prepend trainable virtual tokens to the input. Li and Liang, 2021; Lester et al., 2021.
+LoRA: represent and learn weight changes as the product of two small, thin matrices, a low-rank representation. Hu et al., 2022. Currently the most widely used approach.
+QLoRA: LoRA plus compression of original weights to 4 bits for even lower memory use. Dettmers et al., 2023; next slide.
+
+[Additional transcription of text in figures/images]
+Comparison diagram: Full Finetuning (No Adapters) / LoRA / QLoRA.
+Optimizer; Adapters; 16-bit Transformer; 4-bit Transformer.
+
+============================================================
+Search result 3
+============================================================
+Lecture: Fundamentals of Foundation Models
+Section: When and how to adapt the selected model
+Title: Today's exercise: correct output format with QLoRA and measure the effect
+Page: Lecture 2 · Japanese source p.60
+
+Exercise
+Today's exercise: correct output format with QLoRA and measure the effect.
+Continue from the preparatory homework: exposing a model through an API using Colab + FastAPI + ngrok, and observing variation caused by temperature.
+Prepare: resolve difficulties from the preparatory homework.
+Measure before: measure format compliance, repeating runs at the same temperature.
+Train with QLoRA: fine-tune using examples that follow the required format.
+Measure after: replace the model with the fine-tuned version and measure using the same questions.
+Control — knowledge questions: these should not change. If they do, question the evaluation.
+Format compliance rate = the proportion of answers that can be parsed as JSON and contain all required fields: answer, slide and confidence.
+You can say the issue was fixed only after running the same evaluation before and after.
+
+============================================================
+Search result 4
+============================================================
+Lecture: Fundamentals of Foundation Models
+Section: When and how to adapt the selected model
+Title: Evidence and debate: RAG often works better for adding knowledge
+Page: Lecture 2 · translated PDF p.79
+
+4/4: when and how to adapt the selected model
+Evidence and debate: RAG often works better for adding knowledge.
+This does not mean FT can add no knowledge at all. Treat it as a general rule while understanding the exceptions.
+Sources: Ovadia et al., EMNLP 2024; Gekhman et al., EMNLP 2024; Biderman et al., TMLR 2024; Zhou et al., LIMA, NeurIPS 2023.
+Research findings underlying the general rule:
+Ovadia et al. (2024): on knowledge tasks, RAG consistently outperformed FT directly on documents.
+Gekhman et al. (2024): examples containing new knowledge are learned slowly; learning more of them tends to increase errors, or hallucinations.
+Biderman et al. (2024): LoRA learns less and forgets less than full FT. It suits small adjustments.
+Exceptions and differing findings:
+• Continued pre-training, or CPT, on large amounts of text can add language and domain knowledge, as in Japanese Swallow models.
+• Training on varied paraphrases of the same fact can make knowledge easier to learn through FT.
+• About 1,000 high-quality examples can substantially change behavior, as in LIMA.
+• Transferring a large model's behavior to a small one, or distillation, is also used to reduce cost and latency.
+
+============================================================
+Search result 5
+============================================================
+Lecture: Fundamentals of Foundation Models
+Section: When and how to adapt the selected model
+Title: Exercise steps and deliverables — tentative
+Page: Lecture 2 · Japanese source p.61
+
+Exercise
+Exercise steps and deliverables — tentative
+Times are approximate. It is important to use the same questions, temperature and number of runs before and after.
+1. Preparation, 10 minutes: fix problems from the preparatory homework and check that the API works.
+2. Measure before FT, 10 minutes: use 30 evaluation questions × 3 runs to measure format compliance. Also save answers to 10 ordinary questions.
+3. Train with QLoRA, 20 minutes: train on 200 examples, taking roughly ten to twenty minutes on a Colab GPU.
+4. Measure after FT, 10 minutes: replace the model and use the same questions, temperature and number of runs as in step 2.
+5. Control — knowledge questions, 5 minutes: the examples include no facts, so the results should not change. If they do, suspect an evaluation or training error.
+Deliverables:
+• A before/after comparison table: format compliance and answers to ordinary questions.
+• Two examples of questions that were not fixed.
+• A three-line discussion of what improved, what did not, and why.
+Use 30 evaluation questions that do not overlap with training data. Small differences may be within the noise, so report variation across the three runs too.
+
+===== EX1 full context | Q1 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+[full-context] Input: 369,490 characters
+To answer your question based on the provided course materials:
+
+* **What LoRA freezes and trains:** 
+  LoRA freezes the original weights of the foundation model and trains only small added matrices (or delta changes/adapters) [Lecture 2 · Japanese source p.52, Lecture 2 · translated PDF p.75, Lecture 2 · translated PDF p.81]. The trainable portion can be less than 1% of the total parameters [Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75].
+
+* **What QLoRA adds:** 
+  QLoRA builds upon LoRA by compressing the original foundation model weights to 4-bit (using a coarser numerical representation), which reduces the weight memory footprint to about one quarter while keeping the adapters themselves unquantized [Lecture 2 · Japanese source p.51, Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75, Lecture 2 · translated PDF p.81].
+
+**Hint for thinking further:** Think about *why* this distinction matters when working with limited hardware (like a single GPU). If the original weights take up gigabytes of memory, what does freezing them—or further quantizing them to 4 bits—allow you to do on a resource-constrained machine?
+
+--- trace ---
+[time] Answer completed in 3.09 seconds (including retrieval and embedding)
+[usage] Input 95,823 tokens / Output 276 tokens / Model responses 1
+[cost] Estimated generation API cost: $0.029437 USD (excludes embedding and index construction)
+
+===== EX2 vector search | Q1 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+Based on Lecture 2:
+
+* **What LoRA freezes and trains:** It freezes the original model weights ($W$) and trains only a small change or delta represented by the product of two small, thin matrices ($A$ and $B$) using low-rank representation (Lecture 2, pp. 51–52).
+* **What QLoRA adds:** QLoRA adds **compression of the original weights down to 4 bits** (a coarser numerical representation), which significantly reduces memory usage while still applying LoRA (Lecture 2, pp. 51–52).
+
+--- trace ---
+[tool call]   search_materials({'query': 'LoRA freeze train QLoRA'})
+[tool return] search_materials -> 5 pages
+    - hit: Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75 · LoRA and QLoRA: adapting a large model on one GPU
+    - hit: Lecture 2 · Japanese source p.51 · PEFT: train only part of a model
+    - hit: Lecture 2 · Japanese source p.60 · Today's exercise: correct output format with QLoRA and measu
+    - hit: Lecture 2 · translated PDF p.79 · Evidence and debate: RAG often works better for adding knowl
+    - hit: Lecture 2 · Japanese source p.61 · Exercise steps and deliverables — tentative
+[time] Answer completed in 3.51 seconds (including retrieval and embedding)
+[usage] Input 2,756 tokens / Output 146 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001192 USD (excludes embedding and index construction)
+
+===== EX3 tree | Q1 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+To answer your question about LoRA and QLoRA based on Lecture 2:
+
+* **What LoRA freezes:** The original model weights ($W$), keeping them completely frozen and untrained (analogous to leaving the main model untouched) [Lecture 2, p. 52].
+* **What LoRA trains:** It trains only small adapter matrices (such as low-rank matrices $A$ and $B$) representing the change or delta, which can be less than 1% of the total parameters [Lecture 2, p. 52].
+* **What QLoRA adds:** QLoRA adds **4-bit quantization** to the original weights. It compresses the frozen original model weights to 4-bit precision (a coarser numerical representation), which significantly reduces memory usage—down to about one-quarter for the base model—allowing large models with billions of parameters to be fine-tuned on a single consumer GPU [Lecture 2, p. 52].
+
+--- trace ---
+[tool call]   browse_tree({})
+[open table of contents] AIE2026 course materials
+  Direct children (first sentence only for pages):
+    - lec01-main · Introduction to AI Engineering and AI-Assisted Coding
+    - lec02-main · Fundamentals of Foundation Models
+    - lec03-main · AI Agents
+[tool call]   browse_tree({'node_id': 'lec02-main'})
+[open table of contents] AIE2026 course materials → Fundamentals of Foundation Models
+  Direct children (first sentence only for pages):
+    - lec02-main-p001 · Lecture 2 · translated PDF p.1 · Fundamentals of Foundation Models
+      AI Engineering Course — Lecture 2
+    - lec02-main-p002 · Lecture 2 · translated PDF p.5 · Today: inside [3] Model training — the foundation model itself
+      Recap of the previous lecture
+    - lec02-main-p003 · Lecture 2 · Japanese source p.3 · Build a chatbot and you soon encounter these difficulties
+      Today's question
+    - lec02-main-p004 · Lecture 2 · Japanese source p.4 · Today's four questions — 15 minutes each
+      Today's outline
+    - lec02-main-p005 · Lecture 2 · translated PDF p.8 · Today's topic is the model itself
+      Today's outline
+    - lec02-main-p006 · Lecture 2 · Japanese source p.6 · Six terms to know first
+      Today's outline
+    - lec02-main-s007 · LLMs select the next words probabilistically
+    - lec02-main-s019 · Provide information/select a model, adapt it, or let it think more
+    - lec02-main-s030 · A map of foundation models and how to choose
+    - lec02-main-s045 · When and how to adapt the selected model
+    - lec02-main-s063 · Supplement: recent developments and further explanation
+[tool call]   browse_tree({'node_id': 'lec02-main-s045'})
+[open table of contents] AIE2026 course materials → Fundamentals of Foundation Models → When and how to adapt the selected model
+  Direct children (first sentence only for pages):
+    - lec02-main-p045 · Lecture 2 · Japanese source p.45 · When and how should you adapt the selected model?
+      Lecture 2 — Part 4/4, approximately 15 minutes
+    - lec02-main-p046 · Lecture 2 · Japanese source p.46 · Small-scale FT changes behavior well but is weaker at adding knowledge
+      4/4: when and how to adapt the selected model
+    - lec02-main-p047 · Lecture 2 · translated PDF p.79 · Evidence and debate: RAG often works better for adding knowledge
+      4/4: when and how to adapt the selected model
+    - lec02-main-p048 · Lecture 2 · translated PDF p.80 · Continued pre-training: adding knowledge and language
+      4/4: when and how to adapt the selected model
+    - lec02-main-p049 · Lecture 2 · translated PDF p.81 · FT is also used to reduce cost
+      4/4: when and how to adapt the selected model
+    - lec02-main-p050 · Lecture 2 · Japanese source p.50 · Decision sequence: measure, separate, prompt, then Fine-Tuning
+      4/4: when and how to adapt the selected model
+    - lec02-main-p051 · Lecture 2 · Japanese source p.51 · PEFT: train only part of a model
+      4/4: when and how to adapt the selected model
+    - lec02-main-p052 · Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75 · LoRA and QLoRA: adapting a large model on one GPU
+      4/4: when and how to adapt the selected model
+    - lec02-main-p053 · Lecture 2 · Japanese source p.53 · For a chatbot: what to fine-tune and what not to
+      4/4: when and how to adapt the selected model
+    - lec02-main-p054 · Lecture 2 · Japanese source p.54 · Building examples: pair questions with ideal answers
+      4/4: when and how to adapt the selected model
+    - lec02-main-p055 · Lecture 2 · Japanese source p.55 · FT pitfalls: did anything else break?
+      4/4: when and how to adapt the selected model
+    - lec02-main-p056 · Lecture 2 · Japanese source p.56 · Quiz 4: what is Fine-Tuning best suited for?
+      Quiz 4/4
+    - lec02-main-p057 · Lecture 2 · Japanese source p.57 · Quiz 4: what is Fine-Tuning best suited for? — answer
+      Quiz 4/4
+    - lec02-main-p058 · Lecture 2 · Japanese source p.58 · Checklist before Fine-Tuning
+      4/4: when and how to adapt the selected model
+    - lec02-main-p059 · Lecture 2 · Japanese source p.59 · Lecture 2 summary: four core ideas and what to do tomorrow
+      Summary
+    - lec02-main-p060 · Lecture 2 · Japanese source p.60 · Today's exercise: correct output format with QLoRA and measure the effect
+      Exercise
+    - lec02-main-p061 · Lecture 2 · Japanese source p.61 · Exercise steps and deliverables — tentative
+      Exercise
+    - lec02-main-p062 · Lecture 2 · Japanese source p.62 · Next: AI agents — today's properties are design assumptions
+      Next lecture
+[tool call]   browse_tree({'node_id': 'lec02-main-p052'})
+[open table of contents] AIE2026 course materials → Fundamentals of Foundation Models → When and how to adapt the selected model → LoRA and QLoRA: adapting a large model on one GPU
+    (Leaf page: retrieved 1238 characters of text)
+[time] Answer completed in 9.41 seconds (including retrieval and embedding)
+[usage] Input 9,437 tokens / Output 290 tokens / Model responses 5
+[cost] Estimated generation API cost: $0.003556 USD (excludes embedding and index construction)
+
+===== EX4 graph | Q1 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+According to Lecture 2 (slide 52), **LoRA** freezes the original model weights and trains only a small change, or delta, represented by small low-rank matrices (referred to as matrices A and B) [lec02-main-p052]. 
+
+**QLoRA** builds on LoRA by adding memory-efficient weight compression: it compresses the original base model weights into a coarser 4-bit numerical representation (while keeping them frozen and trained via LoRA), which significantly reduces memory consumption [lec02-main-p052].
+
+--- trace ---
+[tool call]   search_graph({'query': 'LoRA freeze train QLoRA add Lecture 2'})
+[tool return] search_graph -> 10 pages
+    - seed: Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75 · LoRA and QLoRA: adapting a large model on one GPU (hops=0)
+    - seed: Lecture 2 · Japanese source p.51 · PEFT: train only part of a model (hops=0)
+    - seed: Lecture 2 · Japanese source p.60 · Today's exercise: correct output format with QLoRA and measu (hops=0)
+    - expanded: Lecture 2 · Japanese source p.53 · For a chatbot: what to fine-tune and what not to (hops=1)
+    - expanded: Lecture 2 · Japanese source p.50 · Decision sequence: measure, separate, prompt, then Fine-Tuni (hops=1)
+    - expanded: Lecture 2 · Japanese source p.59 · Lecture 2 summary: four core ideas and what to do tomorrow (hops=1)
+    - expanded: Lecture 2 · Japanese source p.61 · Exercise steps and deliverables — tentative (hops=1)
+    - expanded: Lecture 2 · translated PDF p.81 · FT is also used to reduce cost (hops=2)
+    - expanded: Lecture 2 · Japanese source p.62 · Next: AI agents — today's properties are design assumptions (hops=2)
+    - expanded: Lecture 2 · translated PDF p.79 · Evidence and debate: RAG often works better for adding knowl (hops=2)
+[time] Answer completed in 3.62 seconds (including retrieval and embedding)
+[usage] Input 5,193 tokens / Output 147 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001925 USD (excludes embedding and index construction)
+
+===== EX5 vector search | Q2 multi-page (baseline, top-k 5) (attempt 1) =====
+[model] gemini-3.5-flash-lite
+To help you think through this, let's look at how memory is categorized and managed in Lecture 3:
+
+* **Compaction vs. Cross-session memory scope:** 
+  Review the breakdown of memory scopes on page 39 (Lecture 3). What happens *inside the context* of a single session versus *external storage* across sessions? Notice what compaction does to old history within the loop compared to how external storage (like the memory tool or auto memory) preserves information for subsequent sessions.
+  *(Source: Lecture 3 · translated PDF p.39, 65)*
+
+* **Do all daily notes become long-term memory?** 
+  Take a look at the "OpenClaw" example on page 40 (Lecture 3). When the system reviews daily notes (like `memory/<date>.md`) during its nightly review process, does it move everything into long-term memory (`MEMORY.md`), or is there a filtering step? What happens to one-off lookups?
+  *(Source: Lecture 3 · translated PDF p.40)*
+
+--- trace ---
+[tool call]   search_materials({'query': 'compaction cross-session memory daily notes long-term memory'})
+[tool return] search_materials -> 5 pages
+    - hit: Lecture 3 · translated PDF p.65 · Supplement: Latest developments in memory and Context Engine
+    - hit: Lecture 3 · translated PDF p.38 · Without memory, every session starts from scratch
+    - hit: Lecture 3 · translated PDF p.39 · Example: Claude
+    - hit: Lecture 3 · translated PDF p.40 · Example: OpenClaw
+    - hit: Lecture 3 · translated PDF p.13 · Memory
+[time] Answer completed in 6.32 seconds (including retrieval and embedding)
+[usage] Input 2,287 tokens / Output 256 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001326 USD (excludes embedding and index construction)
+
+===== EX6 vector search | Q3 not in materials (attempt 1) =====
+[model] gemini-3.5-flash-lite
+Based on the retrieved lecture materials for Lectures 01–03, there are no specific statistics or metrics provided for our RAG system's measured average response time and accuracy. 
+
+While Lecture 2 discusses how to evaluate RAG consistency—using an illustrative example where asking "What is RAG?" five times yields three correct answers and two others (Lecture 2, p. 13)—the materials do not contain performance numbers for response time or overall accuracy of our specific system.
+
+--- trace ---
+[tool call]   search_materials({'query': 'RAG system average response time and accuracy'})
+[tool return] search_materials -> 5 pages
+    - hit: Lecture 2 · Japanese source p.13 · Consequence 1: the same question can get a different answer 
+    - hit: Lecture 3 · translated PDF p.64 · Supplement: Latest developments in long-task capability
+    - hit: Lecture 3 · translated PDF p.19 · Compounding Errors
+    - hit: Lecture 1 · translated PDF p.19 · Lab example: a chatbot for questions in large lectures
+    - hit: Lecture 2 · Japanese source p.3 · Build a chatbot and you soon encounter these difficulties
+[time] Answer completed in 3.66 seconds (including retrieval and embedding)
+[usage] Input 2,840 tokens / Output 124 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001162 USD (excludes embedding and index construction)
+
+===== BASIC vector search | Q2 | RAG_TOP_K=2 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+To help you think through this, let's look at how the lecture materials define these two memory scopes and the lifecycle of daily notes:
+
+1. **Compaction vs. Cross-Session Memory:**
+   * **Compaction:** According to the supplement on latest developments, compaction compresses the *"history within the loop"* (Lecture 3, p. 65). It acts on history within a session.
+   * **Cross-session memory:** In contrast, cross-session memory covers *"records across sessions"* (Lecture 3, p. 65), allowing an agent to retain information and carry context over to future sessions rather than starting entirely from scratch (Lecture 3, p. 38).
+
+2. **Do all daily notes become long-term memory?**
+   * Think about how systems like OpenClaw process daily notes during their nightly review ("dreaming") stage (Lecture 3, p. 40). 
+   * Look closely at what happens to one-off lookups versus information that passes the threshold (Lecture 3, p. 40). Does everything get kept, or is there a filtering process?
+
+--- trace ---
+[tool call]   search_materials({'query': 'compaction cross-session memory daily notes long-term memory'})
+[tool return] search_materials -> 2 pages
+    - hit: Lecture 3 · translated PDF p.65 · Supplement: Latest developments in memory and Context Engine
+    - hit: Lecture 3 · translated PDF p.38 · Without memory, every session starts from scratch
+[tool call]   search_materials({'query': 'daily notes long-term memory memory tool'})
+[tool return] search_materials -> 2 pages
+    - hit: Lecture 3 · translated PDF p.40 · Example: OpenClaw
+    - hit: Lecture 3 · translated PDF p.65 · Supplement: Latest developments in memory and Context Engine
+[time] Answer completed in 5.70 seconds (including retrieval and embedding)
+[usage] Input 3,172 tokens / Output 290 tokens / Model responses 3
+[cost] Estimated generation API cost: $0.001677 USD (excludes embedding and index construction)
+
+===== IMPL vector search | Q1 | adjacent=1 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+Based on Lecture 2 (specifically pages 51 and 52):
+
+* **What LoRA freezes:** The original weights ($W$) of the base model (they are kept frozen and are not trained) (Lecture 2, p. 52).
+* **What LoRA trains:** Only a small added change, or delta, represented by the product of two small, thin matrices ($A$ and $B$) with low rank (Lecture 2, p. 52). 
+* **What QLoRA adds:** QLoRA adds **compression of the original base model weights down to 4 bits** (a coarser numerical representation that reduces memory usage to about one-quarter) while still applying LoRA for training the small matrices (Lecture 2, p. 51–52).
+
+--- trace ---
+[tool call]   search_materials({'query': 'LoRA freeze train QLoRA add'})
+[tool return] search_materials -> 11 pages
+    - hit: Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75 · LoRA and QLoRA: adapting a large model on one GPU
+    - hit: Lecture 2 · Japanese source p.53 · For a chatbot: what to fine-tune and what not to (adjacent page of lec02-main-p052)
+    - hit: Lecture 2 · Japanese source p.51 · PEFT: train only part of a model
+    - hit: Lecture 2 · Japanese source p.50 · Decision sequence: measure, separate, prompt, then Fine-Tuni (adjacent page of lec02-main-p051)
+    - hit: Lecture 2 · translated PDF p.79 · Evidence and debate: RAG often works better for adding knowl
+    - hit: Lecture 2 · Japanese source p.46 · Small-scale FT changes behavior well but is weaker at adding (adjacent page of lec02-main-p047)
+    - hit: Lecture 2 · translated PDF p.80 · Continued pre-training: adding knowledge and language (adjacent page of lec02-main-p047)
+    - hit: Lecture 2 · Japanese source p.60 · Today's exercise: correct output format with QLoRA and measu
+    - hit: Lecture 2 · Japanese source p.59 · Lecture 2 summary: four core ideas and what to do tomorrow (adjacent page of lec02-main-p060)
+    - hit: Lecture 2 · Japanese source p.61 · Exercise steps and deliverables — tentative
+    - hit: Lecture 2 · Japanese source p.62 · Next: AI agents — today's properties are design assumptions (adjacent page of lec02-main-p061)
+[time] Answer completed in 4.30 seconds (including retrieval and embedding)
+[usage] Input 4,792 tokens / Output 193 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001920 USD (excludes embedding and index construction)
+
+===== IMPL vector search | Q2 | adjacent=1 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+The model is busy (503). Wait a little and try again.
+[runner] API limit or overload, waiting 60s and retrying
+===== IMPL vector search | Q2 | adjacent=1 (attempt 2) =====
+[model] gemini-3.5-flash-lite
+Based on **Lecture 3 (Part 6: Memory)**, here is how compaction and cross-session memory differ, along with how daily notes are handled:
+
+### 1. Difference Between Compaction and Cross-Session Memory
+* **Compaction (History summarization within the loop):** 
+  * Operates **inside the context (same session)**. 
+  * It replaces older parts of the conversation history with a summary to help fit the interaction within the model's context limits (Lecture 3, p. 39, 65).
+* **Cross-Session Memory (External storage):** 
+  * Operates **across sessions**. 
+  * It uses external storage (such as files managed via a memory tool or auto-memory) where records are written out and then reloaded into the next session's context so that the agent does not start completely from scratch (Lecture 3, p. 13, 39).
+
+### 2. Do All Daily Notes Become Long-Term Memory?
+* **No, not everything is kept.** 
+* For example, in systems like OpenClaw, daily notes (`memory/<date>.md`) capture the details of specific sessions, but an automatic nightly review process (a "dreaming" phase) collects candidates, drops duplicates, finds recurring themes, and **moves only what passes the threshold** into long-term memory (`MEMORY.md`) (Lecture 3, p. 40). 
+* One-off lookups remain only in the daily notes, preventing long-term memory from bloating with unnecessary information (Lecture 3, p. 40).
+
+--- trace ---
+[tool call]   search_materials({'query': 'compaction cross-session memory daily notes long-term memory'})
+[tool return] search_materials -> 11 pages
+    - hit: Lecture 3 · translated PDF p.65 · Supplement: Latest developments in memory and Context Engine
+    - hit: Lecture 3 · translated PDF p.64 · Supplement: Latest developments in long-task capability (adjacent page of lec03-main-p065)
+    - hit: Lecture 3 · translated PDF p.66 · Supplement: Latest developments in config file standards (AG (adjacent page of lec03-main-p065)
+    - hit: Lecture 3 · translated PDF p.38 · Without memory, every session starts from scratch
+    - hit: Lecture 3 · translated PDF p.37 · Part 6 Memory (adjacent page of lec03-main-p038)
+    - hit: Lecture 3 · translated PDF p.39 · Example: Claude
+    - hit: Lecture 3 · translated PDF p.40 · Example: OpenClaw
+    - hit: Lecture 3 · translated PDF p.41 · Skill: save the procedure for a repeated task as files (adjacent page of lec03-main-p040)
+    - hit: Lecture 3 · translated PDF p.13 · Memory
+    - hit: Lecture 3 · translated PDF p.12 · Loop: tool results are fed back to the model automatically (adjacent page of lec03-main-p013)
+    - hit: Lecture 3 · translated PDF p.14 · Agent = model + harness (adjacent page of lec03-main-p013)
+[time] Answer completed in 4.40 seconds (including retrieval and embedding)
+[usage] Input 4,182 tokens / Output 374 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.002190 USD (excludes embedding and index construction)
+
+===== ADV graph | Q2 (baseline) (attempt 1) =====
+[model] gemini-3.5-flash-lite
+Based on Lecture 3 of the AI Engineering Pilot Course (AIE2026), here is how compaction and cross-session memory differ, along with how daily notes are handled:
+
+* **Compaction vs. Cross-Session Memory:** 
+  * **Compaction** operates *within the current session* (inside the context). It compresses or summarizes past conversation history to fit within context limits [Lecture 3, p. 39, 65]. 
+  * **Cross-session memory** (such as external storage or memory tools) spans *across different sessions*. It preserves records, preferences, or project details so that the agent doesn't start completely from scratch the next time it runs [Lecture 3, p. 38, 39, 65].
+
+* **Do all daily notes become long-term memory?** 
+  * No. According to the OpenClaw memory architecture example, daily notes undergo a nightly review process (a "dreaming" phase) where duplicates are dropped, recurring themes are compared, and *only* what passes a specific threshold is moved into long-term memory (`MEMORY.md`). One-off lookups and temporary details stay in the daily notes so that long-term memory does not bloat [Lecture 3, p. 40]. 
+
+Think about how human memory works: we experience many details throughout the day, but we distill them during rest, keeping only the most vital insights while letting temporary details fade.
+
+--- trace ---
+[tool call]   search_graph({'query': 'compaction cross-session memory daily notes long-term memory'})
+[tool return] search_graph -> 10 pages
+    - seed: Lecture 3 · translated PDF p.65 · Supplement: Latest developments in memory and Context Engine (hops=0)
+    - seed: Lecture 3 · translated PDF p.38 · Without memory, every session starts from scratch (hops=0)
+    - seed: Lecture 3 · translated PDF p.39 · Example: Claude (hops=0)
+    - expanded: Lecture 3 · translated PDF p.64 · Supplement: Latest developments in long-task capability (hops=1)
+    - expanded: Lecture 3 · translated PDF p.66 · Supplement: Latest developments in config file standards (AG (hops=1)
+    - expanded: Lecture 3 · translated PDF p.37 · Part 6 Memory (hops=1)
+    - expanded: Lecture 3 · translated PDF p.40 · Example: OpenClaw (hops=1)
+    - expanded: Lecture 3 · translated PDF p.63 · Supplement: Latest developments in tool calling (hops=2)
+    - expanded: Lecture 3 · translated PDF p.67 · Supplement: Latest developments in sandboxes, permissions, a (hops=2)
+    - expanded: Lecture 3 · translated PDF p.36 · Decision models: a model that writes no text and returns a p (hops=2)
+[time] Answer completed in 7.20 seconds (including retrieval and embedding)
+[usage] Input 4,939 tokens / Output 339 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001782 USD (excludes embedding and index construction)
+
+===== ADV graph | Q2 | re-rank keep 4 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+Based on Lecture 3 of the course materials, here are the key concepts to help answer your questions:
+
+* **Compaction vs. Cross-Session Memory:**
+  * **Compaction** compresses or summarizes history *within the current session/loop* to fit within the context window (replaces older history with a summary) (Lecture 3, pp. 39, 65).
+  * **Cross-session memory** (such as external storage or memory tools) saves records across different sessions so that an agent doesn't have to start completely from scratch the next day (Lecture 3, pp. 13, 39).
+
+* **Do all daily notes become long-term memory?**
+  * Think about how an automated nightly review (or "dreaming" process) works in architectures like OpenClaw: it collects notes, drops duplicates, looks for recurring themes, and moves *only* what passes a certain threshold into long-term memory (`MEMORY.md`) (Lecture 3, p. 40). 
+  * One-off lookups and temporary details stay exclusively in the daily notes so that long-term memory doesn't become bloated (Lecture 3, p. 40).
+
+--- trace ---
+[tool call]   search_graph({'query': 'compaction cross-session memory daily notes long-term memory'})
+[tool return] search_graph -> 7 pages
+    - seed: Lecture 3 · translated PDF p.65 · Supplement: Latest developments in memory and Context Engine (hops=0)
+    - seed: Lecture 3 · translated PDF p.38 · Without memory, every session starts from scratch (hops=0)
+    - seed: Lecture 3 · translated PDF p.39 · Example: Claude (hops=0)
+    - expanded: Lecture 3 · translated PDF p.40 · Example: OpenClaw (hops=1)
+    - expanded: Lecture 3 · translated PDF p.13 · Memory (hops=2)
+    - expanded: Lecture 3 · translated PDF p.41 · Skill: save the procedure for a repeated task as files (hops=2)
+    - expanded: Lecture 3 · translated PDF p.37 · Part 6 Memory (hops=1)
+[time] Answer completed in 8.43 seconds (including retrieval and embedding)
+[usage] Input 3,136 tokens / Output 286 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001656 USD (excludes embedding and index construction)
+
+===== ADV graph | Q1 | re-rank keep 4 (attempt 1) =====
+[model] gemini-3.5-flash-lite
+Based on Lecture 2, here is what LoRA freezes and trains, as well as what QLoRA adds:
+
+* **LoRA freezes** the original base model weights ($W$), keeping them unchanged (similar to adding thin sticky notes to a main model).
+* **LoRA trains** only a small added component—specifically, two low-rank, thin matrices ($A$ and $B$) that represent the weight changes (or deltas).
+* **QLoRA adds** a memory-saving compression step by also quantizing/compressing the original base model weights to 4 bits (a coarser numerical representation).
+
+--- trace ---
+[tool call]   search_graph({'query': 'LoRA freeze train QLoRA add Lecture 2'})
+[tool return] search_graph -> 7 pages
+    - seed: Lecture 2 · Japanese source p.52 · corresponding translated PDF p.75 · LoRA and QLoRA: adapting a large model on one GPU (hops=0)
+    - seed: Lecture 2 · Japanese source p.51 · PEFT: train only part of a model (hops=0)
+    - seed: Lecture 2 · Japanese source p.60 · Today's exercise: correct output format with QLoRA and measu (hops=0)
+    - expanded: Lecture 2 · Japanese source p.61 · Exercise steps and deliverables — tentative (hops=1)
+    - expanded: Lecture 2 · translated PDF p.79 · Evidence and debate: RAG often works better for adding knowl (hops=2)
+    - expanded: Lecture 2 · Japanese source p.54 · Building examples: pair questions with ideal answers (hops=2)
+    - expanded: Lecture 2 · translated PDF p.80 · Continued pre-training: adding knowledge and language (hops=2)
+[time] Answer completed in 6.85 seconds (including retrieval and embedding)
+[usage] Input 4,059 tokens / Output 155 tokens / Model responses 2
+[cost] Estimated generation API cost: $0.001605 USD (excludes embedding and index construction)
+

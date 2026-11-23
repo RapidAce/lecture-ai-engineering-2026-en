@@ -167,6 +167,18 @@ def print_trace(result, elapsed_seconds: float | None = None) -> None:
                                 print(f"      {child['content']}")
                         if not data["children"]:
                             print(f"    (Leaf page: retrieved {len(node.get('content', ''))} characters of text)")
+                elif part.tool_name in ("search_materials", "search_graph"):
+                    # Homework: list every returned page so the evidence can be checked
+                    data = json.loads(part.content)
+                    groups = [("hit", data.get("results", []))] if "results" in data else \
+                        [("seed", data.get("seeds", [])), ("expanded", data.get("expanded", []))]
+                    print(f"[tool return] {part.tool_name} -> " + (data.get("error") or
+                          f"{sum(len(items) for _, items in groups)} pages"))
+                    for label, items in groups:
+                        for item in items:
+                            cite = item.get("citation") or f"{item['document_id']} PDF p.{item['page']}"
+                            extra = item.get("added_as") or (f"hops={item['hops']}" if "hops" in item else "")
+                            print(f"    - {label}: {cite} · {item['title'][:60]}" + (f" ({extra})" if extra else ""))
                 else:
                     print(f"[tool return] {part.tool_name} -> {str(part.content)[:120]}…")
     usage = result.usage

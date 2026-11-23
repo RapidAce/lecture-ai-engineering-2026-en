@@ -18,6 +18,7 @@ from app.config import (
     EMBEDDING_DIMENSIONS, EMBEDDING_MAX_TOKENS, EMBEDDING_MODEL,
     RAG_DB, RAG_DOCUMENT_IDS, RAG_SOURCE, RAG_TOP_K, RAG_TREE, get_api_key,
     RAG_GRAPH, GRAPH_START_K, GRAPH_HOPS, GRAPH_MAX_RESULTS,
+    RAG_ADJACENT, GRAPH_RERANK_KEEP,
 )
 
 
@@ -126,21 +127,71 @@ def open_index(path: Path):
         db.close()
 
 
+def search_by_vector(db, vector: list[float], limit: int) -> list[dict]:
+    """Return up to limit pages closest to an already embedded query vector."""
+    columns = {column["name"] for column in db.execute("PRAGMA table_info(chunks)")}
+    citation = "citation," if "citation" in columns else ""
+    rows = db.execute(f"""
+        SELECT page_id, document_id, lecture, document_title, section, title, page, content,
+               {citation}
+               vec_distance_cosine(embedding, ?) AS distance
+        FROM chunks ORDER BY distance, page_id LIMIT ?
+    """, (sqlite_vec.serialize_float32(vector), limit))
+    return [dict(row) for row in rows]
+
+
 def search(query: str) -> list[dict]:
     """Embed the query and return up to RAG_TOP_K similar pages."""
     if not isinstance(query, str) or not query.strip():
         raise ValueError("The search query is empty.")
     with open_index(RAG_DB) as db:
         vector = embed_text(query.strip(), "RETRIEVAL_QUERY")
-        columns = {column["name"] for column in db.execute("PRAGMA table_info(chunks)")}
-        citation = "citation," if "citation" in columns else ""
-        rows = db.execute(f"""
-            SELECT page_id, document_id, lecture, document_title, section, title, page, content,
-                   {citation}
-                   vec_distance_cosine(embedding, ?) AS distance
-            FROM chunks ORDER BY distance, page_id LIMIT ?
-        """, (sqlite_vec.serialize_float32(vector), RAG_TOP_K))
-        return [dict(row) for row in rows]
+        return search_by_vector(db, vector, RAG_TOP_K)
+
+
+def add_adjacent_pages(hits: list[dict], window: int = RAG_ADJACENT) -> list[dict]:
+    """Homework (Implementation): after each hit, add the text of `window` pages before and after it.
+
+    Only pages from the same document are added (no crossing into another lecture),
+    pages already in the results are not repeated, and each added page records which hit it came from.
+    """
+    if window <= 0:
+        return hits
+    by_position = {(page["document_id"], page["page"]): page for page in load_pages(RAG_SOURCE)}
+    seen = {hit["page_id"] for hit in hits}
+    results = []
+    for hit in hits:
+        results.append(hit)
+        for offset in [o for o in range(-window, window + 1) if o != 0]:
+            neighbor = by_position.get((hit["document_id"], hit["page"] + offset))
+            if neighbor is None or neighbor["page_id"] in seen:
+                continue
+            seen.add(neighbor["page_id"])
+            results.append({**neighbor, "added_as": f"adjacent page of {hit['page_id']}"})
+    return results
+
+
+def search_with_adjacent(query: str) -> list[dict]:
+    """Vector search, plus adjacent pages when RAG_ADJACENT > 0 (used by search_materials and the CLI)."""
+    return add_adjacent_pages(search(query))
+
+
+def rerank_by_distance(db, vector: list[float], candidates: list[dict], keep: int) -> list[dict]:
+    """Homework (Advanced): sort graph candidates by embedding distance to the question and keep the closest ones.
+
+    Uses the page embeddings already stored in the index, so it needs no extra API call.
+    """
+    if not candidates or keep <= 0:
+        return candidates
+    ids = [candidate["page_id"] for candidate in candidates]
+    marks = ",".join("?" for _ in ids)
+    rows = db.execute(
+        f"SELECT page_id, vec_distance_cosine(embedding, ?) AS distance FROM chunks WHERE page_id IN ({marks})",
+        (sqlite_vec.serialize_float32(vector), *ids),
+    )
+    distance = {row["page_id"]: row["distance"] for row in rows}
+    ranked = sorted(candidates, key=lambda c: (distance.get(c["page_id"], 2.0), c["hops"], c["page_id"]))
+    return [{**c, "distance": distance.get(c["page_id"])} for c in ranked[:keep]]
 
 
 def search_graph(query: str) -> dict:
@@ -156,7 +207,12 @@ def search_graph(query: str) -> dict:
             adjacent[a].add(b)
             adjacent[b].add(a)
 
-    seeds = [hit for hit in search(query) if hit["page_id"] in pages][:min(GRAPH_START_K, GRAPH_MAX_RESULTS)]
+    if not isinstance(query, str) or not query.strip():
+        raise ValueError("The search query is empty.")
+    with open_index(RAG_DB) as db:
+        vector = embed_text(query.strip(), "RETRIEVAL_QUERY")  # embed once; reused for re-ranking
+        hits = search_by_vector(db, vector, RAG_TOP_K)
+    seeds = [hit for hit in hits if hit["page_id"] in pages][:min(GRAPH_START_K, GRAPH_MAX_RESULTS)]
     seed_ids = {seed["page_id"] for seed in seeds}
     results, candidates = [], {}
     for rank, seed in enumerate(seeds):
@@ -186,8 +242,12 @@ def search_graph(query: str) -> dict:
                 if neighbor not in candidates or priority < candidates[neighbor][0]:
                     candidates[neighbor] = (priority, candidate)
     expanded = [candidate for _, candidate in sorted(candidates.values())]
+    if GRAPH_RERANK_KEEP > 0:
+        # Advanced: rank every graph candidate by closeness to the question instead of by hop order
+        with open_index(RAG_DB) as db:
+            expanded = rerank_by_distance(db, vector, expanded, GRAPH_RERANK_KEEP)
     return {"seeds": results, "expanded": expanded[:max(0, GRAPH_MAX_RESULTS - len(results))],
-            "max_hops": GRAPH_HOPS}
+            "max_hops": GRAPH_HOPS, "reranked": GRAPH_RERANK_KEEP > 0}
 
 
 
@@ -207,10 +267,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Search the lecture materials without using an agent")
     parser.add_argument("query", help="What to look up")
     args = parser.parse_args()
-    for i, result in enumerate(search(args.query), 1):
+    for i, result in enumerate(search_with_adjacent(args.query), 1):
         print(f"\n{'=' * 60}\nSearch result {i}\n{'=' * 60}")
         print(f"Lecture: {result['document_title']}")
         print(f"Section: {result['section']}")
         print(f"Title: {result['title']}")
         print(f"Page: {result.get('citation') or result['page']}")
+        if result.get("added_as"):
+            print(f"Added: {result['added_as']}")
         print(f"\n{result['content']}")
