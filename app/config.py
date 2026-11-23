@@ -19,7 +19,11 @@ RAG_TREE = ROOT / "data/rag_data/tree.json"
 RAG_GRAPH = ROOT / "data/rag_data/graph.json"
 RAG_DB = Path(os.getenv("AIE_RAG_DB", str(ROOT / "data/rag_data/index.sqlite3")))
 RAG_DOCUMENT_IDS = ("lec01-main", "lec02-main", "lec03-main")
-RAG_TOP_K = 5
+RAG_TOP_K = int(os.getenv("AIE_RAG_TOP_K", "5"))  # Homework (Basic): override with AIE_RAG_TOP_K=2 etc. to compare
+# Homework (Implementation): also return this many pages before/after each hit (same document only). 0 = off
+RAG_ADJACENT = int(os.getenv("AIE_RAG_ADJACENT", "0"))
+# Homework (Advanced): keep only the N graph candidates closest to the question (re-ranked by embedding distance). 0 = off
+GRAPH_RERANK_KEEP = int(os.getenv("AIE_GRAPH_RERANK_KEEP", "0"))
 GRAPH_START_K = 3
 GRAPH_HOPS = 2
 GRAPH_MAX_RESULTS = 10
